@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class CountryAdapter {
 
-    public Country mapToCountry(CountryWireIn wire){
+    public Country toModel(CountryWireIn wire){
         return new Country(
                 wire.name.common, //name->title
                 wire.region,
