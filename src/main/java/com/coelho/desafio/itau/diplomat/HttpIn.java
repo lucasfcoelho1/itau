@@ -24,19 +24,16 @@ public class HttpIn {
     }
 
     @GetMapping
-    public ResponseEntity<Country> getCountryByName(@RequestParam String name) {
+    public ResponseEntity<CountryWithSuggestion> getCountryByName(@RequestParam String name) {
         return httpOut.fetchCountryByName(name)
-                //adapt to model
                 .map(countryAdapter::toModel)
                 .map(country -> {
                     String prompt = generatePrompt(country);
-                    httpOut.fetchDogSuggestionByCountryPrompt(prompt)
-                            .ifPresent(resposta -> {
-                                System.out.println("🐶 IA sugeriu: " + resposta);
-                                // aqui você pode salvar, retornar no body, etc.
-                            });
+                    String dogSuggestion = httpOut
+                            .fetchDogSuggestionByCountryPrompt(prompt)
+                            .orElse("Nenhuma sugestão de cachorro disponível 🐾");
 
-                    return ResponseEntity.ok(country);
+                    return ResponseEntity.ok(new CountryWithSuggestion(country, dogSuggestion));
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -56,5 +53,23 @@ public class HttpIn {
                 country.getRegion(),
                 country.getTotalPopulation()
         );
+    }
+
+    public static class CountryWithSuggestion {
+        private final Country country;
+        private final String dogSuggestion;
+
+        public CountryWithSuggestion(Country country, String dogSuggestion) {
+            this.country = country;
+            this.dogSuggestion = dogSuggestion;
+        }
+
+        public Country getCountry() {
+            return country;
+        }
+
+        public String getDogSuggestion() {
+            return dogSuggestion;
+        }
     }
 }

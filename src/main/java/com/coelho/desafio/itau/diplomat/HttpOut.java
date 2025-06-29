@@ -4,6 +4,7 @@ import com.coelho.desafio.itau.adapter.CountryAdapter;
 import com.coelho.desafio.itau.adapter.wire.CountryWireIn;
 import com.coelho.desafio.itau.service.CountryService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -63,27 +64,29 @@ public class HttpOut {
 
     public Optional<String> fetchDogSuggestionByCountryPrompt(String prompt) {
         try {
-
-            DeepSeekRequest requestBody = new DeepSeekRequest(
-                    "deepseek/deepseek-r1-0528:free",
-                    List.of(new DeepSeekMessage("user", prompt))
+            Map<String, Object> requestBody = Map.of(
+                    "model", "deepseek/deepseek-r1-0528:free",
+                    "messages", List.of(
+                            Map.of(
+                                    "role", "user",
+                                    "content", prompt
+                            )
+                    )
             );
 
-            @SuppressWarnings("unchecked") Map<String, Object> response = deepSeekClient
+            Map<String, Object> response = deepSeekClient
                     .post()
                     .uri("/api/v1/chat/completions")
                     .body(requestBody)
                     .retrieve()
-                    .body(Map.class);
+                    .body(new ParameterizedTypeReference<>() {});
 
-            // extrair resposta
             @SuppressWarnings("unchecked")
             List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
 
             if (choices != null && !choices.isEmpty()) {
                 @SuppressWarnings("unchecked")
                 Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
-
                 if (message != null) {
                     return Optional.ofNullable((String) message.get("content"));
                 }
