@@ -1,8 +1,10 @@
 package com.coelho.desafio.itau.diplomat;
 
 import com.coelho.desafio.itau.adapter.CountryAdapter;
-import com.coelho.desafio.itau.adapter.wire.CountryWireIn;
-import com.coelho.desafio.itau.service.CountryService;
+import com.coelho.desafio.itau.adapter.DogAdapter;
+import com.coelho.desafio.itau.diplomat.wire.CountryWireIn;
+import com.coelho.desafio.itau.model.Country;
+import com.coelho.desafio.itau.model.Dog;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
@@ -13,7 +15,6 @@ import org.springframework.web.client.RestClientException;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @Service
 public class HttpOut {
@@ -21,15 +22,17 @@ public class HttpOut {
     private final RestClient countriesClient;
     private final RestClient deepSeekClient;
     private final CountryAdapter countryAdapter;
+    private final DogAdapter dogAdapter;
 
     public HttpOut(
             RestClient.Builder builder,
             CountryAdapter countryAdapter,
-            @Value("${deepseek.api.key}") String apiKey
+            @Value("${deepseek.api.key}") String apiKey, DogAdapter dogAdapter
     ) {
         this.countriesClient = builder
                 .baseUrl("https://restcountries.com/v3.1")
                 .build();
+        this.dogAdapter = dogAdapter;
 
         this.deepSeekClient = builder
                 .baseUrl("https://openrouter.ai")
@@ -39,7 +42,7 @@ public class HttpOut {
         this.countryAdapter = countryAdapter;
     }
 
-    public Optional<CountryWireIn> fetchCountryByName(String name) {
+    public Country fetchCountryByName(String name) {
         try {
             String uri = UriComponentsBuilder.fromPath("/name/{country}")
                     .buildAndExpand(name)
@@ -51,28 +54,21 @@ public class HttpOut {
                     .retrieve()
                     .body(CountryWireIn[].class);
 
-            return Optional.ofNullable(response)
-                    .filter(countries -> countries.length > 0)
-                    .map(countries -> countries[0]);
+            if (response != null && response.length > 0) {
+                CountryWireIn countryWire = response[0];
+                return countryAdapter.toModel(countryWire);
+            }
 
         } catch (RestClientException ex) {
             System.err.println("Erro ao buscar país: " + ex.getMessage());
-            return Optional.empty();
         }
+
+        return null;
     }
 
-
-    public Optional<String> fetchDogSuggestionByCountryPrompt(String prompt) {
+    public Dog fetchDogSuggestionByCountryPrompt(String prompt) {
         try {
-            Map<String, Object> requestBody = Map.of(
-                    "model", "deepseek/deepseek-r1-0528:free",
-                    "messages", List.of(
-                            Map.of(
-                                    "role", "user",
-                                    "content", prompt
-                            )
-                    )
-            );
+            Map<String, Object> requestBody = getStringObjectMap(prompt);
 
             Map<String, Object> response = deepSeekClient
                     .post()
@@ -88,7 +84,8 @@ public class HttpOut {
                 @SuppressWarnings("unchecked")
                 Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
                 if (message != null) {
-                    return Optional.ofNullable((String) message.get("content"));
+                    String content = (String) message.get("content");
+                    return dogAdapter.toModel(content);
                 }
             }
 
@@ -96,7 +93,16 @@ public class HttpOut {
             System.err.println("Erro ao chamar IA: " + ex.getMessage());
         }
 
-        return Optional.empty();
+        return null;
+    }
+
+    private static Map<String, Object> getStringObjectMap(String prompt) {
+        return Map.of(
+                "model", "deepseek/deepseek-r1-0528:free",
+                "messages", List.of(
+                        Map.of("role", "user", "content", prompt)
+                )
+        );
     }
 
     public record DeepSeekMessage(String role, String content) {

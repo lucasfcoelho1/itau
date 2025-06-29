@@ -1,4 +1,4 @@
-package com.coelho.desafio.itau.adapter.wire;
+package com.coelho.desafio.itau.diplomat.wire;
 
 public class CountryWireIn {
     public Name name;

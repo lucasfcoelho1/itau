@@ -1,6 +1,6 @@
 package com.coelho.desafio.itau.adapter;
 
-import com.coelho.desafio.itau.adapter.wire.CountryWireIn;
+import com.coelho.desafio.itau.diplomat.wire.CountryWireIn;
 import com.coelho.desafio.itau.model.Country;
 import org.springframework.stereotype.Service;
 
