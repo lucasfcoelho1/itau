@@ -2,9 +2,15 @@ package com.coelho.desafio.itau.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.Setter;
 
-public record Dog(String name, String description) {
+@Getter
+public class Dog {
+    private final String name;
+    private final String description;
+
     @JsonCreator
     public Dog(
             @JsonProperty("name") String name,

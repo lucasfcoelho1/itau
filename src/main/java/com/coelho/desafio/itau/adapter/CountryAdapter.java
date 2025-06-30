@@ -9,7 +9,7 @@ public class CountryAdapter {
 
     public Country toModel(CountryWireIn wire){
         return new Country(
-                wire.name.common, //name->title
+                wire.name.common, //name.common->title
                 wire.region,
                 wire.population, //population->totalPopulation
                 wire.flags != null ? wire.flags.png : null

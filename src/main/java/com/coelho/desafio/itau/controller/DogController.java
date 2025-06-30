@@ -11,12 +11,10 @@ public class DogController {
 
 
     private final HttpOut httpOut;
-    private final CountryController countryController;
     private final AiSuggestionLogic aiSuggestionLogic;
 
-    public DogController(HttpOut httpOut, CountryController countryController, AiSuggestionLogic aiSuggestionLogic) {
+    public DogController(HttpOut httpOut, AiSuggestionLogic aiSuggestionLogic) {
         this.httpOut = httpOut;
-        this.countryController = countryController;
         this.aiSuggestionLogic = aiSuggestionLogic;
     }
 

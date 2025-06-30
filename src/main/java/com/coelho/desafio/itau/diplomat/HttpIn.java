@@ -29,6 +29,7 @@ public class HttpIn {
         var country = countryController.getCountry(countryName);
         var dogResponse = dogController.getDogAiSuggestion(country);
         var dogWireOut = countryDogAdapter.toWire(dogResponse, country);
+
         return ResponseEntity.ok(dogWireOut);
     }
 }
