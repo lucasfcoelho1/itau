@@ -25,10 +25,6 @@ import java.util.Map;
 import java.util.Optional;
 
 @Service
-@Retryable(
-        maxAttempts = 2,
-        backoff = @Backoff(delay = 2000, multiplier = 2)
-)
 public class HttpOut {
 
     private static final Logger log = LoggerFactory.getLogger(HttpOut.class);
@@ -57,6 +53,11 @@ public class HttpOut {
         this.dogAdapter = dogAdapter;
     }
 
+    @Retryable(
+            retryFor = ExternalServiceException.class,
+            maxAttempts = 2,
+            backoff = @Backoff(delay = 2000, multiplier = 2)
+    )
     public Country fetchCountryByName(String name) {
         return Optional.ofNullable(name)
                 .map(n -> UriComponentsBuilder.fromPath("/name/{country}")
@@ -69,6 +70,12 @@ public class HttpOut {
                 .orElseThrow(() -> new ExternalServiceException("Nenhum país encontrado com o nome fornecido."));
     }
 
+    @Retryable(
+            retryFor = ExternalServiceException.class,
+            maxAttempts = 2,
+            backoff = @Backoff(delay = 2000, multiplier = 2)
+    )
+    @SuppressWarnings("unchecked")
     public Dog fetchDogSuggestionByCountryPrompt(String prompt) {
         return Optional.ofNullable(prompt)
                 .map(p -> Map.of(
