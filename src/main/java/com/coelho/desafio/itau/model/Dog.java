@@ -25,9 +25,9 @@ public class Dog {
 
     @JsonCreator
     public Dog(
-            @JsonProperty("name") String name,
+            @JsonProperty("breed") String breed,
             @JsonProperty("description") String description) {
-        this.breed = name;
+        this.breed = breed;
         this.description = description;
     }
 
