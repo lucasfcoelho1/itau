@@ -17,7 +17,7 @@ public class AiSuggestionLogic {
         Responda apenas com o nome da raça ideal e uma frase explicando o motivo.
                 Formato da resposta:
                     {
-                      "name": "NomeDaRaça",
+                      "breed": "NomeDaRaça",
                       "description": "Motivo da recomendação"
                     }
                 

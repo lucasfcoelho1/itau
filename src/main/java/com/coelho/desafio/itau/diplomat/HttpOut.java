@@ -4,6 +4,7 @@ import com.coelho.desafio.itau.adapter.CountryAdapter;
 import com.coelho.desafio.itau.adapter.DogAdapter;
 import com.coelho.desafio.itau.diplomat.wire.in.CountryWireIn;
 import com.coelho.desafio.itau.exception.ExternalServiceException;
+import com.coelho.desafio.itau.exception.RateLimitExceededException;
 import com.coelho.desafio.itau.exception.ResponseParseException;
 import com.coelho.desafio.itau.model.Country;
 import com.coelho.desafio.itau.model.Dog;
@@ -110,7 +111,13 @@ public class HttpOut {
                     .uri("/api/v1/chat/completions")
                     .body(requestBody)
                     .retrieve()
-                    .body(new ParameterizedTypeReference<>() {});
+                    .onStatus(status -> status.value() == 429, (req, res) -> {
+                        throw new RateLimitExceededException("Limite de requisições atingido na IA");
+                    })
+                    .body(new ParameterizedTypeReference<>() {
+                    });
+        } catch (RateLimitExceededException e) {
+            throw e;
         } catch (RestClientException ex) {
             throw new ExternalServiceException("Erro ao chamar IA", ex);
         }
@@ -134,5 +141,11 @@ public class HttpOut {
     public Dog recoverDog(ExternalServiceException ex, String prompt) {
         log.error("Falha ao obter sugestão de cachorro com prompt '{}' após múltiplas tentativas", prompt, ex);
         throw new ExternalServiceException("Falha definitiva ao obter sugestão de cachorro da IA", ex);
+    }
+
+    @Recover
+    public Dog recoverRateLimit(RateLimitExceededException ex, String prompt) {
+        log.error("Limite de requisições atingido com prompt '{}'", prompt, ex);
+        throw new RateLimitExceededException("Falha definitiva: limite de requisições atingido na IA", ex);
     }
 }
