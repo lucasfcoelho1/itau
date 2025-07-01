@@ -20,7 +20,7 @@ public class CountryAdapterTests {
         Dog result = adapter.toModel(json);
 
         assertNotNull(result);
-        assertEquals("Golden Retriever", result.getName());
+        assertEquals("Golden Retriever", result.getBreed());
         assertEquals("Amigável, dócil e ótimo para famílias.", result.getDescription());
     }
 

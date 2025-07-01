@@ -1,7 +1,5 @@
 package com.coelho.desafio.itau.adapter;
 
-import com.coelho.desafio.itau.diplomat.wire.CountryDogWireOut;
-import com.coelho.desafio.itau.model.Country;
 import com.coelho.desafio.itau.model.Dog;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
@@ -19,6 +17,5 @@ public class DogAdapter {
             return null;
         }
     }
-
 
 }

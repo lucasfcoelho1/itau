@@ -1,18 +1,14 @@
 package com.coelho.desafio.itau.diplomat;
 
-import com.coelho.desafio.itau.adapter.CountryAdapter;
 import com.coelho.desafio.itau.adapter.CountryDogAdapter;
 import com.coelho.desafio.itau.controller.CountryController;
 import com.coelho.desafio.itau.controller.DogController;
-import com.coelho.desafio.itau.diplomat.wire.CountryDogWireOut;
+import com.coelho.desafio.itau.diplomat.wire.out.CountryDogWireOut;
 import com.coelho.desafio.itau.logic.AiSuggestionLogic;
 import com.coelho.desafio.itau.model.Country;
 import com.coelho.desafio.itau.model.Dog;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.http.ResponseEntity;
-
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;

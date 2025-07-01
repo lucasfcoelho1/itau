@@ -21,11 +21,11 @@ public class AiSuggestionLogic {
                       "description": "Motivo da recomendação"
                     }
                 
-        Importante: responda somente com o JSON acima, sem comentários adicionais.
+        Importante: não precisa formatar como json, retorne apenas um texto puro.
         """.formatted(
-                country.title(),
-                country.region(),
-                country.totalPopulation()
+                country.getTitle(),
+                country.getRegion(),
+                country.getTotalPopulation()
         );
     }
 }

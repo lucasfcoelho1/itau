@@ -1,9 +1,9 @@
-package com.coelho.desafio.itau.diplomat.wire;
+package com.coelho.desafio.itau.diplomat.wire.in;
 
 public class CountryWireIn {
     public Name name;
     public String region;
-    public int population;
+    public Long population;
     public Flags flags;
 
     public static class Name {

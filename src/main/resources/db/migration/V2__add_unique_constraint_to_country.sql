@@ -1,0 +1,1 @@
+ALTER TABLE country ADD CONSTRAINT uk_country_title UNIQUE (title);

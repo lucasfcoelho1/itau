@@ -2,23 +2,30 @@ package com.coelho.desafio.itau.diplomat;
 
 import com.coelho.desafio.itau.adapter.CountryAdapter;
 import com.coelho.desafio.itau.adapter.DogAdapter;
-import com.coelho.desafio.itau.diplomat.wire.CountryWireIn;
+import com.coelho.desafio.itau.diplomat.wire.in.CountryWireIn;
 import com.coelho.desafio.itau.model.Country;
 import com.coelho.desafio.itau.model.Dog;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
-import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 @Service
+@Retryable(
+        maxAttempts = 2,
+        backoff = @Backoff(delay = 2000, multiplier = 2))
 public class HttpOut {
-
     private final RestClient countriesClient;
     private final RestClient deepSeekClient;
     private final CountryAdapter countryAdapter;
@@ -27,7 +34,7 @@ public class HttpOut {
     public HttpOut(
             RestClient.Builder builder,
             CountryAdapter countryAdapter,
-            @Value("${deepseek.api.key}") String apiKey, DogAdapter dogAdapter
+            @Value("${openrouter.api.key}") String apiKey, DogAdapter dogAdapter
     ) {
         this.countriesClient = builder
                 .baseUrl("https://restcountries.com/v3.1")
@@ -43,66 +50,76 @@ public class HttpOut {
     }
 
     public Country fetchCountryByName(String name) {
-        try {
-            String uri = UriComponentsBuilder.fromPath("/name/{country}")
-                    .buildAndExpand(name)
-                    .toUriString();
+        return Optional.ofNullable(name)
+                .map(n -> UriComponentsBuilder.fromPath("/name/{country}")
+                        .buildAndExpand(n)
+                        .toUriString())
+                .map(this::safeFetchFromApi)
+                .filter(arr -> arr.length > 0)
+                .map(arr -> arr[0])
+                .map(countryAdapter::toModel)
+                .orElse(null);
+    }
 
-            CountryWireIn[] response = countriesClient
+    public Dog fetchDogSuggestionByCountryPrompt(String prompt) {
+        Dog fallback = new Dog();
+        fallback.setDescription("Ocorreu um erro na sugestão da IA, por favor tente novamente");
+
+        //noinspection ConstantValue,unchecked
+        return Optional.of(prompt)
+                .map(p -> Map.of(
+                        "model", "deepseek/deepseek-r1:free",
+                        "messages", List.of(Map.of("role", "user", "content", p))
+                ))
+                .map(this::callDeepSeek)
+                .map(response -> (List<Map<String, Object>>) response.get("choices"))
+                .filter(choices -> !choices.isEmpty())
+                .map(choices -> (Map<String, Object>) choices.get(0).get("message"))
+                .map(message -> (String) message.get("content"))
+                .map(this::safeParseDog)
+                .filter(Objects::nonNull)
+                .orElse(fallback);
+    }
+
+    private CountryWireIn[] safeFetchFromApi(String uri) {
+        try {
+            return countriesClient
                     .get()
                     .uri(uri)
                     .retrieve()
                     .body(CountryWireIn[].class);
-
-            if (response != null && response.length > 0) {
-                CountryWireIn countryWire = response[0];
-                return countryAdapter.toModel(countryWire);
-            }
-
         } catch (RestClientException ex) {
             System.err.println("Erro ao buscar país: " + ex.getMessage());
+            return new CountryWireIn[0];
         }
-
-        return null;
     }
 
-    public Dog fetchDogSuggestionByCountryPrompt(String prompt) {
+    private Map<String, Object> callDeepSeek(Map<String, Object> requestBody) {
         try {
-            Map<String, Object> requestBody = getStringObjectMap(prompt);
-
-            Map<String, Object> response = deepSeekClient
+            return deepSeekClient
                     .post()
                     .uri("/api/v1/chat/completions")
                     .body(requestBody)
                     .retrieve()
                     .body(new ParameterizedTypeReference<>() {});
-
-            @SuppressWarnings("unchecked")
-            List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
-
-            if (choices != null && !choices.isEmpty()) {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
-                if (message != null) {
-                    String content = (String) message.get("content");
-                    return dogAdapter.toModel(content);
-                }
-            }
-
         } catch (RestClientException ex) {
             System.err.println("Erro ao chamar IA: " + ex.getMessage());
+            return null;
         }
-
-        return null;
     }
 
-    private static Map<String, Object> getStringObjectMap(String prompt) {
-        return Map.of(
-                "model", "deepseek/deepseek-r1-0528:free",
-                "messages", List.of(
-                        Map.of("role", "user", "content", prompt)
-                )
-        );
+    private Dog safeParseDog(String content) {
+        try {
+            return dogAdapter.toModel(content);
+        } catch (Exception e) {
+            System.err.println("Erro ao converter resposta da IA para Dog: " + e.getMessage());
+            return null;
+        }
+    }
+
+    @Recover
+    public void recover(){
+        System.out.println("Tentando novamente...");
     }
 
     public record DeepSeekMessage(String role, String content) {

@@ -1,6 +1,6 @@
 services:
   mysql:
-    image: mysql
+    image: mysql:8.4.0
     ports:
       - "3306:3306"
     expose:
@@ -8,7 +8,13 @@ services:
     environment:
       - MYSQL_USER=useritau
       - MYSQL_PASSWORD=passworditau
-      - MYSQL_DATABASE=itau-db
+      - MYSQL_DATABASE=itaudb
       - MYSQL_ROOT_PASSWORD=root
     volumes:
       - "./conf.d:/etc/mysql/conf.d:ro"
+  redis:
+    image: redis:7.2
+    ports:
+      - "6379:6379"
+    expose:
+      - "6379"

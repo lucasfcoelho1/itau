@@ -2,20 +2,34 @@ package com.coelho.desafio.itau.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AllArgsConstructor;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
+@Setter
+@Entity
 public class Dog {
-    private final String name;
-    private final String description;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String breed;
+    private String description;
+
+    @OneToOne
+    @JoinColumn(name = "country_id", referencedColumnName = "id")
+    private Country country;
+
+    public Dog() {
+    }
 
     @JsonCreator
     public Dog(
             @JsonProperty("name") String name,
             @JsonProperty("description") String description) {
-        this.name = name;
+        this.breed = name;
         this.description = description;
     }
+
+
 }
