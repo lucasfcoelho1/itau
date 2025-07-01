@@ -3,8 +3,12 @@ package com.coelho.desafio.itau.diplomat;
 import com.coelho.desafio.itau.adapter.CountryAdapter;
 import com.coelho.desafio.itau.adapter.DogAdapter;
 import com.coelho.desafio.itau.diplomat.wire.in.CountryWireIn;
+import com.coelho.desafio.itau.exception.ExternalServiceException;
+import com.coelho.desafio.itau.exception.ResponseParseException;
 import com.coelho.desafio.itau.model.Country;
 import com.coelho.desafio.itau.model.Dog;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
@@ -18,14 +22,17 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 
 @Service
 @Retryable(
         maxAttempts = 2,
-        backoff = @Backoff(delay = 2000, multiplier = 2))
+        backoff = @Backoff(delay = 2000, multiplier = 2)
+)
 public class HttpOut {
+
+    private static final Logger log = LoggerFactory.getLogger(HttpOut.class);
+
     private final RestClient countriesClient;
     private final RestClient deepSeekClient;
     private final CountryAdapter countryAdapter;
@@ -34,12 +41,12 @@ public class HttpOut {
     public HttpOut(
             RestClient.Builder builder,
             CountryAdapter countryAdapter,
-            @Value("${openrouter.api.key}") String apiKey, DogAdapter dogAdapter
+            @Value("${openrouter.api.key}") String apiKey,
+            DogAdapter dogAdapter
     ) {
         this.countriesClient = builder
                 .baseUrl("https://restcountries.com/v3.1")
                 .build();
-        this.dogAdapter = dogAdapter;
 
         this.deepSeekClient = builder
                 .baseUrl("https://openrouter.ai")
@@ -47,6 +54,7 @@ public class HttpOut {
                 .build();
 
         this.countryAdapter = countryAdapter;
+        this.dogAdapter = dogAdapter;
     }
 
     public Country fetchCountryByName(String name) {
@@ -54,34 +62,29 @@ public class HttpOut {
                 .map(n -> UriComponentsBuilder.fromPath("/name/{country}")
                         .buildAndExpand(n)
                         .toUriString())
-                .map(this::safeFetchFromApi)
+                .map(this::fetchCountryWireOrThrow)
                 .filter(arr -> arr.length > 0)
                 .map(arr -> arr[0])
                 .map(countryAdapter::toModel)
-                .orElse(null);
+                .orElseThrow(() -> new ExternalServiceException("Nenhum país encontrado com o nome fornecido."));
     }
 
     public Dog fetchDogSuggestionByCountryPrompt(String prompt) {
-        Dog fallback = new Dog();
-        fallback.setDescription("Ocorreu um erro na sugestão da IA, por favor tente novamente");
-
-        //noinspection ConstantValue,unchecked
-        return Optional.of(prompt)
+        return Optional.ofNullable(prompt)
                 .map(p -> Map.of(
                         "model", "deepseek/deepseek-r1:free",
                         "messages", List.of(Map.of("role", "user", "content", p))
                 ))
-                .map(this::callDeepSeek)
+                .map(this::callDeepSeekOrThrow)
                 .map(response -> (List<Map<String, Object>>) response.get("choices"))
                 .filter(choices -> !choices.isEmpty())
                 .map(choices -> (Map<String, Object>) choices.get(0).get("message"))
                 .map(message -> (String) message.get("content"))
-                .map(this::safeParseDog)
-                .filter(Objects::nonNull)
-                .orElse(fallback);
+                .map(this::parseDogOrThrow)
+                .orElseThrow(() -> new ExternalServiceException("Resposta da IA estava vazia ou inválida"));
     }
 
-    private CountryWireIn[] safeFetchFromApi(String uri) {
+    private CountryWireIn[] fetchCountryWireOrThrow(String uri) {
         try {
             return countriesClient
                     .get()
@@ -89,12 +92,11 @@ public class HttpOut {
                     .retrieve()
                     .body(CountryWireIn[].class);
         } catch (RestClientException ex) {
-            System.err.println("Erro ao buscar país: " + ex.getMessage());
-            return new CountryWireIn[0];
+            throw new ExternalServiceException("Erro ao buscar país", ex);
         }
     }
 
-    private Map<String, Object> callDeepSeek(Map<String, Object> requestBody) {
+    private Map<String, Object> callDeepSeekOrThrow(Map<String, Object> requestBody) {
         try {
             return deepSeekClient
                     .post()
@@ -103,28 +105,27 @@ public class HttpOut {
                     .retrieve()
                     .body(new ParameterizedTypeReference<>() {});
         } catch (RestClientException ex) {
-            System.err.println("Erro ao chamar IA: " + ex.getMessage());
-            return null;
+            throw new ExternalServiceException("Erro ao chamar IA", ex);
         }
     }
 
-    private Dog safeParseDog(String content) {
+    private Dog parseDogOrThrow(String content) {
         try {
             return dogAdapter.toModel(content);
         } catch (Exception e) {
-            System.err.println("Erro ao converter resposta da IA para Dog: " + e.getMessage());
-            return null;
+            throw new ResponseParseException("Erro ao converter resposta da IA para Dog", e);
         }
     }
 
     @Recover
-    public void recover(){
-        System.out.println("Tentando novamente...");
+    public Country recoverCountry(ExternalServiceException ex, String name) {
+        log.error("Falha ao buscar país '{}' após múltiplas tentativas", name, ex);
+        throw new ExternalServiceException("Falha definitiva ao buscar país: " + name, ex);
     }
 
-    public record DeepSeekMessage(String role, String content) {
-    }
-
-    public record DeepSeekRequest(String model, List<DeepSeekMessage> messages) {
+    @Recover
+    public Dog recoverDog(ExternalServiceException ex, String prompt) {
+        log.error("Falha ao obter sugestão de cachorro com prompt '{}' após múltiplas tentativas", prompt, ex);
+        throw new ExternalServiceException("Falha definitiva ao obter sugestão de cachorro da IA", ex);
     }
 }

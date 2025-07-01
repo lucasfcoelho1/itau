@@ -16,22 +16,18 @@ public class CountryService {
     }
 
     public Country fetchCountryByName(String countryName) {
-        // Primeiro, tenta encontrar o nome digitado
         var existingByInput = countryRepository.findByTitleIgnoreCase(countryName);
         if (existingByInput.isPresent()) {
             return existingByInput.get();
         }
 
-        // Se não encontrou, busca na API
         var countryFromApi = httpOut.fetchCountryByName(countryName);
         if (countryFromApi != null) {
-            // Verifica se já existe no banco pelo nome retornado pela API ("Brazil", por exemplo)
             var existingByApiTitle = countryRepository.findByTitleIgnoreCase(countryFromApi.getTitle());
             if (existingByApiTitle.isPresent()) {
-                return existingByApiTitle.get(); // evita duplicar
+                return existingByApiTitle.get();
             }
 
-            // Agora sim, salva com segurança
             countryRepository.save(countryFromApi);
             return countryFromApi;
         }
