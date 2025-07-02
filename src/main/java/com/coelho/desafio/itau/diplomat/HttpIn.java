@@ -6,10 +6,10 @@ import com.coelho.desafio.itau.controller.DogController;
 import com.coelho.desafio.itau.diplomat.wire.out.CountryDogWireOut;
 import com.coelho.desafio.itau.exception.ExternalServiceException;
 import com.coelho.desafio.itau.service.CacheService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import redis.clients.jedis.Jedis;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class HttpIn {
@@ -23,8 +23,6 @@ public class HttpIn {
             DogController dogController,
             CountryController countryController,
             CountryDogAdapter countryDogAdapter,
-            Jedis jedis,
-            ObjectMapper objectMapper,
             CacheService cacheService
     ) {
         this.dogController = dogController;

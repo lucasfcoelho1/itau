@@ -7,25 +7,32 @@ import org.springframework.stereotype.Service;
 public class AiSuggestionLogic {
     public String generatePrompt(Country country) {
         return """
-        Me sugira uma raça de cachorro ideal para alguém que vive em um país com as seguintes características:
-
-        Nome do país: %s
-        Região: %s
-        População total: %d
-        Estilo de vida, clima e ambiente devem ser inferidos com base nesses dados.
-
-        Responda apenas com o nome da raça ideal e uma frase explicando o motivo.
-                Formato da resposta:
-                    {
-                      "breed": "NomeDaRaça",
-                      "description": "Motivo da recomendação"
-                    }
+                Com base nas informações abaixo sobre um país, recomende uma única raça de cachorro ideal para viver nesse local.
                 
-        Importante: não precisa formatar como json, retorne apenas um texto puro.
-        """.formatted(
+                País:
+                - Nome: %s
+                - Região: %s
+                - População total: %d
+                
+                Responda com um JSON válido contendo duas propriedades:
+                - "breed": nome da raça sugerida
+                - "description": motivo da recomendação, em uma única frase clara
+                
+                Exemplo de resposta válida:
+                {
+                  "breed": "Labrador Retriever",
+                  "description": "É amigável e adaptável, ideal para famílias em regiões urbanas de clima ameno."
+                }
+                
+                ⚠️ Importante:
+                - NÃO utilize blocos de código ou formatação Markdown como ```json
+                - Retorne apenas o JSON cru
+                - NÃO adicione explicações antes ou depois
+                """.formatted(
                 country.getTitle(),
                 country.getRegion(),
                 country.getTotalPopulation()
         );
     }
+
 }

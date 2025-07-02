@@ -20,7 +20,7 @@ public class Country {
     @OneToOne(mappedBy = "country",
             cascade = CascadeType.ALL,
             orphanRemoval = true,
-            fetch = FetchType.LAZY)
+            fetch = FetchType.EAGER)
     private Dog dog;
 
     protected Country() {

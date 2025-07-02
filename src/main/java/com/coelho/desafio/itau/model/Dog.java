@@ -30,6 +30,4 @@ public class Dog {
         this.breed = breed;
         this.description = description;
     }
-
-
 }
