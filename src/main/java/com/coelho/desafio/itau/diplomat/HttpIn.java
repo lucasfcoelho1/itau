@@ -39,7 +39,7 @@ public class HttpIn {
     }
 
     private ResponseEntity<CountryDogWireOut> getFromCacheOrGenerate(String cacheKey, String countryName) {
-        CountryDogWireOut cached = cacheService.get(cacheKey, CountryDogWireOut.class);
+        CountryDogWireOut cached = cacheService.get(cacheKey).orElse(null);
         if (cached != null) {
             return ResponseEntity.ok(cached);
         }

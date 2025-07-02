@@ -4,13 +4,19 @@ openrouter:
     #key: "sk-41e7c86e37824666ae94ed5825dc31e3"
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/itaudb?serverTimezone=UTC
+    url: jdbc:mysql://mysql:3306/itaudb?serverTimezone=UTC
     username: useritau
     password: passworditau
     driver-class-name: com.mysql.cj.jdbc.Driver
     output:
       ansi:
         enabled: always
+  data:
+    redis:
+      host: redis
+      port: 6379
+  profiles:
+    active: local
 
   jpa:
     hibernate:
@@ -23,10 +29,6 @@ spring:
     baseline-on-migrate: true
     validate-on-migrate: true
 
-redis:
-  host: localhost
-  port: 6379
-
 resilience4j:
   circuitbreaker:
     instances:
@@ -36,3 +38,7 @@ resilience4j:
         waitDurationInOpenState: 10s
         permittedNumberOfCallsInHalfOpenState: 2
         automaticTransitionFromOpenToHalfOpenEnabled: true
+logging:
+  level:
+    root: INFO
+    com.coelho.desafio.itau: DEBUG

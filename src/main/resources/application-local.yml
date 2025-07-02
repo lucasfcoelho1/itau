@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/itaudb?serverTimezone=UTC
+    username: useritau
+    password: passworditau
+  data:
+    redis:
+      host: localhost
+      port: 6379
