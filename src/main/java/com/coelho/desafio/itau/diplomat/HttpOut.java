@@ -22,9 +22,11 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class HttpOut {
@@ -45,13 +47,19 @@ public class HttpOut {
         this.petAdapter = petAdapter;
     }
 
-    public CountryWireIn[] getListCountry() {
+    public List<Country> getCountryList() {
         CountryWireIn[] countryWireIns = countriesClient
                 .get()
                 .uri("https://restcountries.com/v3.1/all?fields=name,region")
                 .retrieve()
                 .body(CountryWireIn[].class);
-        return countryWireIns;
+
+        // Mapeia os dados externos para o modelo interno
+        List<Country> countries = Arrays.stream(countryWireIns)
+                .map(countryAdapter::toModel)
+                .collect(Collectors.toList());
+
+        return countries;
     }
 
     @Retryable(retryFor = ExternalServiceException.class, maxAttempts = 2, backoff = @Backoff(delay = 2000, multiplier = 2))

@@ -1,18 +1,22 @@
 package com.coelho.desafio.itau.controller;
 
-import com.coelho.desafio.itau.diplomat.HttpOut;
+import com.coelho.desafio.itau.logic.CacheKey;
 import com.coelho.desafio.itau.model.Country;
+import com.coelho.desafio.itau.service.CacheService;
 import com.coelho.desafio.itau.service.CountryService;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Stream;
 
 @Service
 public class CountryController {
 
-    private final HttpOut httpOut;
     private final CountryService countryService;
+    private final CacheService cacheService;
 
-    public CountryController(HttpOut httpOut, CountryService countryService) {
-        this.httpOut = httpOut;
+    public CountryController(CountryService countryService, CacheService cacheService) {
+        this.cacheService = cacheService;
         this.countryService = countryService;
     }
 
@@ -20,24 +24,33 @@ public class CountryController {
         return countryService.fetchCountryByName(countryName);
     }
 
-//    public List<CountryWireOut> getAllCountriesWithFilter(CountryWireIn filter) {
-//        return getCountryWireOuts(filter);
-//    }
+    public List<Country> getCountries(String name, String region) {
+        var countryListCached = countryService.getCountryListCached();
 
-//    private List<CountryWireOut> getCountryWireOuts(CountryWireIn filter) {
-//        String cacheKey = "countries:v1";
-//
-//        List<CountryWireOut> allCountries = cacheService.get(cacheKey, List.class);
-//
-//        if (allCountries == null) {
-//            allCountries = httpOut.fetchAllCountriesFromExternal();
-//            cacheService.set(cacheKey, allCountries); // TTL de 1 hora já configurado
-//        }
-//
-//        // Filtro in-memory
-//        return allCountries.stream()
-//                .filter(c -> filter.getRegion() == null || c.getRegion().equalsIgnoreCase(filter.getRegion()))
-//                .filter(c -> filter.getName() == null || c.getName().toLowerCase().contains(filter.getName().common.toLowerCase()))
-//                .toList();
-//    }
+        if (countryListCached != null) {
+            return filterCountries(countryService.mappedCachedCountries(countryListCached), name, region);
+        }
+
+        var countries = countryService.fetchCountries();
+
+        cacheService.set(CacheKey.COUNTRY_LIST_ALL.getDisplayName(), countries);
+
+        return filterCountries(countries, name, region);
+    }
+
+    private List<Country> filterCountries(List<Country> countries, String name, String region) {
+        Stream<Country> stream = countries.stream();
+        if (region != null) {
+            stream = stream.filter(c -> c.getRegion() != null && c.getRegion().equalsIgnoreCase(region));
+        }
+        if (name != null) {
+            stream = stream.filter(c -> c.getTitle() != null && c.getTitle().toLowerCase().contains(name.toLowerCase()));
+        }
+
+        List<Country> filtered = stream.toList();
+
+        return filtered;
+    }
+
+
 }

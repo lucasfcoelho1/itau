@@ -4,7 +4,8 @@ import lombok.Getter;
 
 @Getter
 public enum CacheKey {
-    PET_SUGGESTION("petSuggestion:");;
+    PET_SUGGESTION("petSuggestion:"),
+    COUNTRY_LIST_ALL("countryList:All");
 
     private final String displayName;
     CacheKey(String displayName) {
