@@ -12,7 +12,7 @@ public class FilterConfig {
     public FilterRegistrationBean<JwtAuthFilter> jwtFilter(JwtAuthFilter filter) {
         FilterRegistrationBean<JwtAuthFilter> registration = new FilterRegistrationBean<>();
         registration.setFilter(filter);
-        registration.addUrlPatterns("/dogs/*", "/countries/*");
+        registration.addUrlPatterns("/api/pet-suggestion/*", "/api/countries/*");
         return registration;
     }
 }
