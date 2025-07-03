@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class PetSuggestionAdapter {
 
-    public PetSuggestionWireOut toWire(PetSuggestion petSuggestion) {
+    public PetSuggestionWireOut toWireOut(PetSuggestion petSuggestion) {
         var wireCountry = new CountryWireOut(
                 petSuggestion.getCountry().getTitle(),
                 petSuggestion.getCountry().getRegion());

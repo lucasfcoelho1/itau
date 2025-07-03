@@ -4,6 +4,8 @@ import com.coelho.desafio.itau.model.PetSuggestion;
 import com.coelho.desafio.itau.service.PetService;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 public class PetController {
 
@@ -16,13 +18,10 @@ public class PetController {
     }
 
     public PetSuggestion generatePetSuggestionByCountryName(String countryName) {
-        var petSuggestionCached = petService.getPetSuggestionCached(countryName);
-        if (petSuggestionCached != null) return petSuggestionCached;
-
-        var country = countryController.getCountry(countryName);
-
-        var petSuggestion = petService.buildPetSuggestionFromCountry(country);
-
-        return petSuggestion;
+        return Optional.ofNullable(petService.getPetSuggestionCached(countryName))
+                .orElseGet(() -> {
+                    var country = countryController.getCountry(countryName);
+                    return petService.buildPetSuggestionFromCountry(country);
+                });
     }
 }

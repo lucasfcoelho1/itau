@@ -22,10 +22,7 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -47,19 +44,27 @@ public class HttpOut {
         this.petAdapter = petAdapter;
     }
 
-    public List<Country> getCountryList() {
-        CountryWireIn[] countryWireIns = countriesClient
-                .get()
-                .uri("https://restcountries.com/v3.1/all?fields=name,region")
-                .retrieve()
-                .body(CountryWireIn[].class);
-
-        // Mapeia os dados externos para o modelo interno
-        List<Country> countries = Arrays.stream(countryWireIns)
+    @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 2000, multiplier = 2))
+    public List<Country> fetchCountryList() {
+        return Optional.ofNullable(
+                        countriesClient.get()
+                                .uri("https://restcountries.com/v3.1/all?fields=name,region,population,flags")
+                                .retrieve()
+                                .body(CountryWireIn[].class)
+                ).stream().flatMap(Arrays::stream)
                 .map(countryAdapter::toModel)
-                .collect(Collectors.toList());
-
-        return countries;
+                .toList()
+                .stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.collectingAndThen(
+                        Collectors.toList(),
+                        list -> {
+                            if (list.isEmpty()) {
+                                throw new ExternalServiceException("Nenhum país foi encontrado na API externa.");
+                            }
+                            return list;
+                        }
+                ));
     }
 
     @Retryable(retryFor = ExternalServiceException.class, maxAttempts = 2, backoff = @Backoff(delay = 2000, multiplier = 2))
@@ -101,7 +106,7 @@ public class HttpOut {
         }
     }
 
-    @CircuitBreaker(name = "aiService", fallbackMethod = "fallbackDeepSeek")
+    @CircuitBreaker(name = "aiService", fallbackMethod = "fallbackAi")
     private Map<String, Object> callAiWithCircuitBreaker(Map<String, Object> requestBody) {
         return callAiOrThrow(requestBody);
     }

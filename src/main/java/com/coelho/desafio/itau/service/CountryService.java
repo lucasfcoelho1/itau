@@ -1,13 +1,13 @@
 package com.coelho.desafio.itau.service;
 
 import com.coelho.desafio.itau.diplomat.HttpOut;
-import com.coelho.desafio.itau.exception.ExternalServiceException;
 import com.coelho.desafio.itau.logic.CacheKey;
 import com.coelho.desafio.itau.model.Country;
 import org.springframework.stereotype.Service;
 
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Objects;
 
 @Service
 public class CountryService {
@@ -24,35 +24,21 @@ public class CountryService {
     }
 
     public List<?> getCountryListCached() {
-        final String cacheKey = CacheKey.COUNTRY_LIST_ALL.getDisplayName();
-
-        List<?> countryListCached = cacheService.get(cacheKey, List.class);
-        return countryListCached;
+        return cacheService.get(CacheKey.COUNTRY_LIST_ALL.getDisplayName(), List.class);
     }
 
     public List<Country> mappedCachedCountries(List<?> countryListCached) {
-        return countryListCached.stream().filter(java.util.Objects::nonNull).map(obj -> {
-            java.util.LinkedHashMap<?, ?> map = (java.util.LinkedHashMap<?, ?>) obj;
-            return new Country(
-                    (String) map.get("title"),
-                    (String) map.get("region")
-            );
-        }).collect(Collectors.toList());
+        return countryListCached.stream()
+                .filter(Objects::nonNull)
+                .map(obj -> (LinkedHashMap<?, ?>) obj)
+                .map(map -> new Country(
+                        (String) map.get("title"),
+                        (String) map.get("region")
+                ))
+                .toList();
     }
 
-    public List<Country> fetchCountries(){
-        try {
-            // Chamada para a API externa
-
-            List<Country> countries = httpOut.getCountryList();
-            if (countries == null || countries.isEmpty()) {
-                throw new ExternalServiceException("Nenhum país foi encontrado na API externa.");
-            }
-            return countries;
-
-
-        }catch (ExternalServiceException e){
-            throw e;
-        }
+    public List<Country> fetchCountries() {
+        return httpOut.fetchCountryList();
     }
 }

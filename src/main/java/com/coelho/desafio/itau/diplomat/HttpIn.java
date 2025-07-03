@@ -6,7 +6,6 @@ import com.coelho.desafio.itau.controller.CountryController;
 import com.coelho.desafio.itau.controller.PetController;
 import com.coelho.desafio.itau.diplomat.wire.out.CountryWireOut;
 import com.coelho.desafio.itau.diplomat.wire.out.PetSuggestionWireOut;
-import com.coelho.desafio.itau.service.CacheService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 public class HttpIn {
@@ -22,38 +22,36 @@ public class HttpIn {
     private final PetSuggestionAdapter petSuggestionAdapter;
     private final CountryController countryController;
     private final CountryAdapter countryAdapter;
-    private final CacheService cacheService;
-    private final HttpOut httpOut;
 
-    public HttpIn(PetController petController, PetSuggestionAdapter petSuggestionAdapter, CountryController countryController, CountryAdapter countryAdapter, CacheService cacheService, HttpOut httpOut) {
+    public HttpIn(PetController petController, PetSuggestionAdapter petSuggestionAdapter, CountryController countryController, CountryAdapter countryAdapter) {
         this.petController = petController;
         this.petSuggestionAdapter = petSuggestionAdapter;
         this.countryController = countryController;
         this.countryAdapter = countryAdapter;
-        this.cacheService = cacheService;
-        this.httpOut = httpOut;
     }
 
     @GetMapping("/api/countries")
-    public ResponseEntity<?> getCountries(@RequestParam(required = false) String region, @RequestParam(required = false) String name) {
-        var countries = countryController.getCountries(name, region);
+    public ResponseEntity<List<CountryWireOut>> getCountries(
+            @RequestParam(required = false) String region,
+            @RequestParam(required = false) String name) {
 
-        if (countries.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        List<CountryWireOut> response = countries.stream()
-                .map(countryAdapter::toWireOut)
-                .toList();
-        return ResponseEntity.ok(response);
+        return Optional.of(countryController.getCountries(name, region))
+                .filter(list -> !list.isEmpty())
+                .map(list -> list.stream()
+                        .map(countryAdapter::toWireOut)
+                        .toList())
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
 
     @GetMapping("/api/pet-suggestion/country/{countryName}")
-    public ResponseEntity<PetSuggestionWireOut> getPetSuggestionResponseByCountryName(@PathVariable String countryName) {
-        var petSuggestion = petController.generatePetSuggestionByCountryName(countryName);
+    public ResponseEntity<PetSuggestionWireOut> getPetSuggestionResponseByCountryName(
+            @PathVariable String countryName) {
 
-        var response = petSuggestionAdapter.toWire(petSuggestion);
-
-        return ResponseEntity.ok(response);
+        return Optional.ofNullable(petController.generatePetSuggestionByCountryName(countryName))
+                .map(petSuggestionAdapter::toWireOut)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 }

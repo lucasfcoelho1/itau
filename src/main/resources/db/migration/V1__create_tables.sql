@@ -2,9 +2,7 @@ CREATE TABLE country
 (
     id               BIGINT AUTO_INCREMENT PRIMARY KEY,
     title            VARCHAR(255) NOT NULL UNIQUE,
-    region           VARCHAR(255),
-    total_population BIGINT,
-    flag_url         VARCHAR(512)
+    region           VARCHAR(255)
 );
 
 CREATE TABLE dog

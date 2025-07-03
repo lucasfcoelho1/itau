@@ -1,7 +1,7 @@
 openrouter:
   api:
     key: "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"
-    #key: "sk-41e7c86e37824666ae94ed5825dc31e3"
+
 spring:
   datasource:
     url: jdbc:mysql://mysql:3306/itaudb?serverTimezone=UTC
