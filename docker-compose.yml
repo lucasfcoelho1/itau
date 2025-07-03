@@ -26,7 +26,8 @@ services:
       - mysql
       - redis
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/itau
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/itaudb
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
       SPRING_REDIS_HOST: redis
