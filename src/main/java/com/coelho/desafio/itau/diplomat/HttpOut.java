@@ -32,17 +32,26 @@ public class HttpOut {
     private static final Logger log = LoggerFactory.getLogger(HttpOut.class);
 
     private final RestClient countriesClient;
-    private final RestClient deepSeekClient;
+    private final RestClient aiClient;
     private final CountryAdapter countryAdapter;
     private final PetAdapter petAdapter;
 
     public HttpOut(RestClient.Builder builder, CountryAdapter countryAdapter, @Value("${openrouter.api.key}") String apiKey, PetAdapter petAdapter) {
         this.countriesClient = builder.baseUrl("https://restcountries.com/v3.1").build();
-        this.deepSeekClient = builder.baseUrl("https://openrouter.ai")
+        this.aiClient = builder.baseUrl("https://openrouter.ai")
                 .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
                 .build();
         this.countryAdapter = countryAdapter;
         this.petAdapter = petAdapter;
+    }
+
+    public CountryWireIn[] getListCountry() {
+        CountryWireIn[] countryWireIns = countriesClient
+                .get()
+                .uri("https://restcountries.com/v3.1/all?fields=name,region")
+                .retrieve()
+                .body(CountryWireIn[].class);
+        return countryWireIns;
     }
 
     @Retryable(retryFor = ExternalServiceException.class, maxAttempts = 2, backoff = @Backoff(delay = 2000, multiplier = 2))
@@ -91,7 +100,7 @@ public class HttpOut {
 
     private Map<String, Object> callAiOrThrow(Map<String, Object> requestBody) {
         try {
-            return deepSeekClient.post()
+            return aiClient.post()
                     .uri("/api/v1/chat/completions")
                     .body(requestBody)
                     .retrieve()

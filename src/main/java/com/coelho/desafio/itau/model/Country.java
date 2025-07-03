@@ -32,4 +32,9 @@ public class Country {
         this.totalPopulation = totalPopulation;
         this.flagUrl = flagUrl;
     }
+
+    public Country(String title, String region){
+        this.title = title;
+        this.region = region;
+    }
 }
