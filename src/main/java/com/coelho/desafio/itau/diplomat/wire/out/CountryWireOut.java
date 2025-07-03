@@ -8,6 +8,4 @@ import lombok.Data;
 public class CountryWireOut {
     private String name;
     private String region;
-    private Long population;
-    private String flagUrl;
 }

@@ -12,7 +12,6 @@ public class Logic {
                 País:
                 - Nome: %s
                 - Região: %s
-                - População total: %d
                 
                 Responda com um JSON válido contendo duas propriedades:
                 - "breed": nome da raça sugerida
@@ -30,8 +29,7 @@ public class Logic {
                 - NÃO adicione explicações antes ou depois
                 """.formatted(
                 country.getTitle(),
-                country.getRegion(),
-                country.getTotalPopulation()
+                country.getRegion()
         );
     }
 

@@ -64,7 +64,11 @@ public class HttpIn {
                 }
 
                 // Mapeia os dados externos para o modelo interno
-                countries = Arrays.stream(countryWireIns).map(wire -> new Country(wire.getName().common, wire.getRegion())).collect(Collectors.toList());
+                countries = Arrays.stream(countryWireIns)
+                        .map(wire -> new Country(
+                                wire.getName().common,
+                                wire.getRegion()))
+                        .collect(Collectors.toList());
 
                 // Salva no cache
                 cacheService.set(cacheKey, countries);

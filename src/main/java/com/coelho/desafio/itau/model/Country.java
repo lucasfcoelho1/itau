@@ -14,9 +14,6 @@ public class Country {
     private Long id;
     private String title;
     private String region;
-    private Long totalPopulation;
-    private String flagUrl;
-
     @OneToOne(mappedBy = "country",
             cascade = CascadeType.ALL,
             orphanRemoval = true,
@@ -26,14 +23,7 @@ public class Country {
     protected Country() {
     }
 
-    public Country(String title, String region, Long totalPopulation, String flagUrl) {
-        this.title = title;
-        this.region = region;
-        this.totalPopulation = totalPopulation;
-        this.flagUrl = flagUrl;
-    }
-
-    public Country(String title, String region){
+    public Country(String title, String region) {
         this.title = title;
         this.region = region;
     }

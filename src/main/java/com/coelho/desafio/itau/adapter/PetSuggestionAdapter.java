@@ -12,10 +12,7 @@ public class PetSuggestionAdapter {
     public PetSuggestionWireOut toWire(PetSuggestion petSuggestion) {
         var wireCountry = new CountryWireOut(
                 petSuggestion.getCountry().getTitle(),
-                petSuggestion.getCountry().getRegion(),
-                petSuggestion.getCountry().getTotalPopulation(),
-                petSuggestion.getCountry().getFlagUrl() != null ? petSuggestion.getCountry().getFlagUrl() : null
-        );
+                petSuggestion.getCountry().getRegion());
 
         var petWireOut = new PetWireOut(
                 petSuggestion.getPet().getBreed(),
