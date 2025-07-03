@@ -1,27 +1,45 @@
 package com.coelho.desafio.itau.service;
 
 import com.coelho.desafio.itau.config.RedisConfig;
-import com.coelho.desafio.itau.diplomat.wire.out.CountryDogWireOut;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
-@Service
+
+@Component
+@Slf4j
 public class CacheService {
 
-    private final RedisTemplate<String, CountryDogWireOut> redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final ObjectMapper objectMapper;
 
-    public CacheService(RedisTemplate<String, CountryDogWireOut> redisTemplate) {
+    public CacheService(RedisTemplate<String, Object> redisTemplate, ObjectMapper objectMapper) {
         this.redisTemplate = redisTemplate;
+        this.objectMapper = objectMapper;
     }
 
-    public void set(String key, CountryDogWireOut value) {
-        redisTemplate.opsForValue().set(key, value, RedisConfig.TTL_SECONDS, TimeUnit.SECONDS);
+    public <T> void set(String key, T value) {
+        try {
+            String json = objectMapper.writeValueAsString(value);
+            redisTemplate.opsForValue().set(key, json, Duration.ofSeconds(RedisConfig.TTL_SECONDS));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public Optional<CountryDogWireOut> get(String key) {
-        return Optional.ofNullable(redisTemplate.opsForValue().get(key));
+    public <T> T get(String key, Class<T> objectClass) {
+        String json = (String) redisTemplate.opsForValue().get(key);
+        if (json == null) return null;
+
+        try {
+            return objectMapper.readValue(json, objectClass);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
+
 }
