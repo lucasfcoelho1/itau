@@ -21,7 +21,7 @@ public class Country {
             cascade = CascadeType.ALL,
             orphanRemoval = true,
             fetch = FetchType.EAGER)
-    private Dog dog;
+    private Pet pet;
 
     protected Country() {
     }

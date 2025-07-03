@@ -1,11 +1,8 @@
 package com.coelho.desafio.itau.diplomat;
 
-import com.coelho.desafio.itau.adapter.CountryDogAdapter;
-import com.coelho.desafio.itau.controller.CountryController;
-import com.coelho.desafio.itau.controller.DogController;
-import com.coelho.desafio.itau.diplomat.wire.out.CountryDogWireOut;
-import com.coelho.desafio.itau.exception.ExternalServiceException;
-import com.coelho.desafio.itau.service.CacheService;
+import com.coelho.desafio.itau.adapter.PetSuggestionAdapter;
+import com.coelho.desafio.itau.controller.PetController;
+import com.coelho.desafio.itau.diplomat.wire.out.PetSuggestionWireOut;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,46 +11,34 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class HttpIn {
 
-    private final DogController dogController;
-    private final CountryController countryController;
-    private final CountryDogAdapter countryDogAdapter;
-    private final CacheService cacheService;
+    private final PetController petController;
+    private final PetSuggestionAdapter petSuggestionAdapter;
 
     public HttpIn(
-            DogController dogController,
-            CountryController countryController,
-            CountryDogAdapter countryDogAdapter,
-            CacheService cacheService
+            PetController petController,
+            PetSuggestionAdapter petSuggestionAdapter
     ) {
-        this.dogController = dogController;
-        this.countryController = countryController;
-        this.countryDogAdapter = countryDogAdapter;
-        this.cacheService = cacheService;
+        this.petController = petController;
+        this.petSuggestionAdapter = petSuggestionAdapter;
     }
 
-    @GetMapping("/api/countries/{countryName}/dogs")
-    public ResponseEntity<CountryDogWireOut> getDogSuggestionByCountryName(@PathVariable String countryName) {
-        String cacheKey = "countryDog:" + countryName.toLowerCase();
+//    @GetMapping("/countries")
+//    public ResponseEntity<?> getCountries(@Valid CountryWireIn filter) {
+//        List<CountryWireOut> countries = countryController.getAllCountriesWithFilter(filter);
+//
+//        if (countries.isEmpty()) {
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Nenhum país encontrado.");
+//        }
+//
+//        return ResponseEntity.ok(countries);
+//    }
 
-        return getFromCacheOrGenerate(cacheKey, countryName);
-    }
+    @GetMapping("/api/pet-suggestion/countries/{countryName}")
+    public ResponseEntity<PetSuggestionWireOut> getPetSuggestionResponseByCountryName(@PathVariable String countryName) {
+        var petSuggestion = petController.generatePetSuggestionByCountryName(countryName);
 
-    private ResponseEntity<CountryDogWireOut> getFromCacheOrGenerate(String cacheKey, String countryName) {
-        CountryDogWireOut cached = cacheService.get(cacheKey, CountryDogWireOut.class);
-        if (cached != null) {
-            return ResponseEntity.ok(cached);
-        }
+        var response = petSuggestionAdapter.toWire(petSuggestion);
 
-        var country = countryController.getCountry(countryName);
-        var dog = dogController.getDogAiSuggestion(country);
-
-        if (country == null || dog == null) {
-            throw new ExternalServiceException("Falha ao obter país ou cachorro");
-        }
-
-        var response = countryDogAdapter.toWire(dog, country);
-
-        cacheService.set(cacheKey, response);
         return ResponseEntity.ok(response);
     }
 }

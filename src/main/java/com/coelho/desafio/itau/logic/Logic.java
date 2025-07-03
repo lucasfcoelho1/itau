@@ -4,7 +4,8 @@ import com.coelho.desafio.itau.model.Country;
 import org.springframework.stereotype.Service;
 
 @Service
-public class AiSuggestionLogic {
+public class Logic {
+    public static final String PET_SUGGESTION = "petSuggestion:";
     public String generatePrompt(Country country) {
         return """
                 Com base nas informações abaixo sobre um país, recomende uma única raça de cachorro ideal para viver nesse local.
@@ -33,6 +34,10 @@ public class AiSuggestionLogic {
                 country.getRegion(),
                 country.getTotalPopulation()
         );
+    }
+
+    public String buildCacheKey(String countryName) {
+        return PET_SUGGESTION + countryName.toLowerCase();
     }
 
 }

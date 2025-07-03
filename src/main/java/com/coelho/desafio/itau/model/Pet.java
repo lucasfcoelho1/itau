@@ -9,7 +9,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-public class Dog {
+public class Pet {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -20,11 +20,11 @@ public class Dog {
     @JoinColumn(name = "country_id", referencedColumnName = "id")
     private Country country;
 
-    public Dog() {
+    public Pet() {
     }
 
     @JsonCreator
-    public Dog(
+    public Pet(
             @JsonProperty("breed") String breed,
             @JsonProperty("description") String description) {
         this.breed = breed;
