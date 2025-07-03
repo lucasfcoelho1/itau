@@ -58,18 +58,18 @@ public class HttpOut {
 
     @Retryable(retryFor = ExternalServiceException.class, maxAttempts = 2, backoff = @Backoff(delay = 2000, multiplier = 2))
     @SuppressWarnings("unchecked")
-    public Pet fetchDogSuggestionByCountryPrompt(String prompt) {
+    public Pet fetchPetSuggestionByCountryPrompt(String prompt) {
         return Optional.ofNullable(prompt)
                 .map(p -> Map.of(
                         "model", "deepseek/deepseek-r1:free",
                         "messages", List.of(Map.of("role", "user", "content", p))
                 ))
-                .map(this::callDeepSeekWithCircuitBreaker)
+                .map(this::callAiWithCircuitBreaker)
                 .map(response -> (List<Map<String, Object>>) response.get("choices"))
                 .filter(choices -> !choices.isEmpty())
                 .map(choices -> (Map<String, Object>) choices.get(0).get("message"))
                 .map(message -> (String) message.get("content"))
-                .map(this::parseDogOrThrow)
+                .map(this::parsePetOrThrow)
                 .orElseThrow(() -> new ExternalServiceException("Resposta da IA estava vazia ou inválida"));
     }
 
@@ -85,11 +85,11 @@ public class HttpOut {
     }
 
     @CircuitBreaker(name = "aiService", fallbackMethod = "fallbackDeepSeek")
-    private Map<String, Object> callDeepSeekWithCircuitBreaker(Map<String, Object> requestBody) {
-        return callDeepSeekOrThrow(requestBody);
+    private Map<String, Object> callAiWithCircuitBreaker(Map<String, Object> requestBody) {
+        return callAiOrThrow(requestBody);
     }
 
-    private Map<String, Object> callDeepSeekOrThrow(Map<String, Object> requestBody) {
+    private Map<String, Object> callAiOrThrow(Map<String, Object> requestBody) {
         try {
             return deepSeekClient.post()
                     .uri("/api/v1/chat/completions")
@@ -107,11 +107,11 @@ public class HttpOut {
         }
     }
 
-    private Pet parseDogOrThrow(String content) {
+    private Pet parsePetOrThrow(String content) {
         try {
             return petAdapter.toModel(content);
         } catch (Exception e) {
-            throw new ResponseParseException("Erro ao converter resposta da IA para Dog", e);
+            throw new ResponseParseException("Erro ao converter resposta da IA para Pet", e);
         }
     }
 
@@ -122,7 +122,7 @@ public class HttpOut {
     }
 
     @Recover
-    public Pet recoverDog(ExternalServiceException ex, String prompt) {
+    public Pet recoverPet(ExternalServiceException ex, String prompt) {
         log.error("Falha ao obter sugestão de cachorro com prompt '{}' após múltiplas tentativas", prompt, ex);
         throw new ExternalServiceException("Falha definitiva ao obter sugestão de cachorro da IA", ex);
     }
@@ -133,7 +133,7 @@ public class HttpOut {
         throw new RateLimitExceededException("Falha definitiva: limite de requisições atingido na IA", ex);
     }
 
-    private Map<String, Object> fallbackDeepSeek(Map<String, Object> requestBody, Throwable t) {
+    private Map<String, Object> fallbackAi(Map<String, Object> requestBody, Throwable t) {
         throw new ExternalServiceException("Serviço de IA indisponível no momento (Circuit Breaker aberto)", t);
     }
 }

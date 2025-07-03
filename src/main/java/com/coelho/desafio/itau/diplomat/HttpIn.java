@@ -33,7 +33,7 @@ public class HttpIn {
 //        return ResponseEntity.ok(countries);
 //    }
 
-    @GetMapping("/api/pet-suggestion/countries/{countryName}")
+    @GetMapping("/api/pet-suggestion/country/{countryName}")
     public ResponseEntity<PetSuggestionWireOut> getPetSuggestionResponseByCountryName(@PathVariable String countryName) {
         var petSuggestion = petController.generatePetSuggestionByCountryName(countryName);
 

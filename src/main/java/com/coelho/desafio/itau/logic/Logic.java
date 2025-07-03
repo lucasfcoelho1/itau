@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class Logic {
-    public static final String PET_SUGGESTION = "petSuggestion:";
     public String generatePrompt(Country country) {
         return """
                 Com base nas informações abaixo sobre um país, recomende uma única raça de cachorro ideal para viver nesse local.
@@ -37,7 +36,7 @@ public class Logic {
     }
 
     public String buildCacheKey(String countryName) {
-        return PET_SUGGESTION + countryName.toLowerCase();
+        return CacheKey.PET_SUGGESTION.getDisplayName() + countryName.toLowerCase();
     }
 
 }

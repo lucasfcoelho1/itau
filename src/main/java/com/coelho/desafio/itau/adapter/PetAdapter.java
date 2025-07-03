@@ -13,7 +13,7 @@ public class PetAdapter {
         try {
             return objectMapper.readValue(jsonResponse, Pet.class);
         } catch (Exception e) {
-            System.err.println("Erro ao converter resposta da IA para Dog: " + e.getMessage());
+            System.err.println("Erro ao converter resposta da IA para Pet: " + e.getMessage());
             return null;
         }
     }

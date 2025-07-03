@@ -17,11 +17,11 @@ public class PetSuggestionAdapter {
                 petSuggestion.getCountry().getFlagUrl() != null ? petSuggestion.getCountry().getFlagUrl() : null
         );
 
-        var wireDog = new PetWireOut(
+        var petWireOut = new PetWireOut(
                 petSuggestion.getPet().getBreed(),
                 petSuggestion.getPet().getDescription()
         );
 
-        return new PetSuggestionWireOut(wireCountry, wireDog);
+        return new PetSuggestionWireOut(wireCountry, petWireOut);
     }
 }
