@@ -1,11 +1,9 @@
 package com.coelho.desafio.itau.controller;
 
 import com.coelho.desafio.itau.security.JwtService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
@@ -17,8 +15,22 @@ public class AuthController {
         this.jwtService = jwtService;
     }
 
-    @GetMapping("/token")
-    public ResponseEntity<String> generateToken(@RequestParam String user) {
-        return ResponseEntity.ok(jwtService.generateToken(user));
+    //TOD: Melhor tratamento de auth com db, login e usuarios
+    @PostMapping("/token")
+    public ResponseEntity<?> generateToken(
+            @RequestParam String user,
+            @RequestParam String password
+    ) {
+        if (isValidUser(user, password)) {
+            String token = jwtService.generateToken(user);
+            return ResponseEntity.ok(token);
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Usuário ou senha inválidos");
+        }
+    }
+
+    private boolean isValidUser(String user, String password) {
+        return "admin".equals(user) && "1234".equals(password);
     }
 }

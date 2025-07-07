@@ -21,6 +21,7 @@ Esta API RESTful sugere a melhor raça de cachorro com base nas características
 
 A aplicação segue princípios da **Arquitetura Hexagonal**:
 
+
 ```
 src/
 ├── adapter/
@@ -32,6 +33,8 @@ src/
 ├── service/
 ├── pure-logic/
 ```
+
+![Arquitetura Proposta](/arquitetura-hexagonal.png)
 
 ## 🔐 Segurança com JWT
 
@@ -150,9 +153,6 @@ docker-compose up --build
 ```bash
 ./mvnw test
 ```
-
-## 📊 Logs e Observabilidade
-
 
 ```bash
 docker build -t pet-suggestion-api .

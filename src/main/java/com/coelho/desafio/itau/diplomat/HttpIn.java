@@ -44,7 +44,6 @@ public class HttpIn {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-
     @GetMapping("/api/pet-suggestion/country/{countryName}")
     public ResponseEntity<PetSuggestionWireOut> getPetSuggestionResponseByCountryName(
             @PathVariable String countryName) {
